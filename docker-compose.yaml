@@ -1,0 +1,20 @@
+
+redis:
+  image: redis
+  container_name: mobile_notification_db
+  volumes:
+    - ./data:/data
+  expose:
+    - 6379
+
+app:
+  links:
+    - redis
+  build: ./
+  volumes:
+    - ./:/usr/src/app
+  ports:
+    - 3005:3005
+  env_file: .env
+  command:
+    sh -c 'yarn install && node index.js'

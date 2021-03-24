@@ -1,0 +1,18 @@
+{
+  "name": "notification-broker-api",
+  "version": "1.0.0",
+  "description": "manage notification tokens and events",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tugrul Topuz <tugrultopuz@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "@awaitjs/express": "^0.7.2",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "firebase-admin": "^9.5.0",
+    "redis": "^3.0.2"
+  }
+}
