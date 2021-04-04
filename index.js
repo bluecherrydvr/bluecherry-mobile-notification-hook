@@ -21,14 +21,15 @@ const router = express.Router();
 
 
 
-async function handleMotionEvent(serverId, clientTokens, {event_datetime, device_id, device_name, dvr_name}) {
+async function handleMotionEvent(clientTokens, {server_uuid, event_datetime, device_id, device_name, dvr_name}) {
 
     return admin.messaging().sendToDevice(Object.values(clientTokens), {
         notification: {
             title: 'Motion Event',
             body:  device_name
         },
-        data: {serverId,
+        data: {
+            serverId: server_uuid,
             eventType: 'motion_event',
             eventDateTime: String(event_datetime),
             deviceId: String(device_id),
@@ -40,14 +41,14 @@ async function handleMotionEvent(serverId, clientTokens, {event_datetime, device
 
 }
 
-async function handleDeviceState(serverId, clientTokens, {event_datetime, device_id, device_name, state, dvr_name}) {
+async function handleDeviceState(clientTokens, {server_uuid, event_datetime, device_id, device_name, state, dvr_name}) {
 
     return admin.messaging().sendToDevice(Object.values(clientTokens), {
         notification: {
             title: 'Device State Event',
             body:  state
         },
-        data: {serverId, state,
+        data: {serverId: server_uuid, state,
             eventType: 'device_state',
             eventDateTime: String(event_datetime),
             deviceId: String(device_id),
@@ -58,14 +59,14 @@ async function handleDeviceState(serverId, clientTokens, {event_datetime, device
 
 }
 
-async function handleSolo(serverId, clientTokens, {event_datetime, state, dvr_name}) {
+async function handleSolo(clientTokens, {server_uuid, event_datetime, state, dvr_name}) {
 
     return admin.messaging().sendToDevice(Object.values(clientTokens), {
         notification: {
             title: 'Solo Event',
             body:  state
         },
-        data: {serverId, state,
+        data: {serverId: server_uuid, state,
             eventType: 'solo',
             eventDateTime: String(event_datetime),
             dvrName: dvr_name
@@ -124,10 +125,14 @@ router.post('/remove-token', wrap(async (req, res) => {
 
 }));
 
-router.post('/hook/:serverId', wrap(async (req, res) => {
+router.post('/hook', wrap(async (req, res) => {
 
-    const {serverId} = req.params;
-    const {event_name, event_datetime} = req.body;
+    const {event_name, event_datetime, server_uuid} = req.body;
+
+    if (!server_uuid) {
+        res.json({success: false, message: 'server uuid is not provided'});
+        return;
+    }
 
     if (!event_name) {
         res.json({success: false, message: 'event name is not provided'});
@@ -139,7 +144,7 @@ router.post('/hook/:serverId', wrap(async (req, res) => {
         return;
     }
 
-    const clientTokens = await redisClient.hgetall('server_token:' + serverId);
+    const clientTokens = await redisClient.hgetall('server_token:' + server_uuid);
 
     if (!clientTokens) {
         res.json({success: false, message: 'there is no token associated this server id'});
@@ -148,13 +153,13 @@ router.post('/hook/:serverId', wrap(async (req, res) => {
 
     switch (event_name) {
         case 'motion_event':
-            await handleMotionEvent(serverId, clientTokens, req.body);
+            await handleMotionEvent(clientTokens, req.body);
             break;
         case 'device_state':
-            await handleDeviceState(serverId, clientTokens, req.body);
+            await handleDeviceState(clientTokens, req.body);
             break;
         case 'solo':
-            await handleSolo(serverId, clientTokens, req.body);
+            await handleSolo(clientTokens, req.body);
             break;
         default:
             res.json({success: false, message: 'unknown event type'});
