@@ -35,7 +35,6 @@ async function handleMotionEvent(clientTokens, {server_uuid, event_datetime, dev
             deviceId: String(device_id),
             deviceName: device_name,
             dvrName: dvr_name
-
         }
     });
 
@@ -77,54 +76,113 @@ async function handleSolo(clientTokens, {server_uuid, event_datetime, state, dvr
 
 
 async function handleMotionEventWithoutNotification(clientTokensWithoutNotification, {server_uuid, event_datetime, device_id, device_name, dvr_name}) {
-
-    return admin.messaging().sendToDevice(clientTokensWithoutNotification, {
-        data: {
-            serverId: server_uuid,
-            eventType: 'motion_event',
-            eventDateTime: String(event_datetime),
-            deviceId: String(device_id),
-            deviceName: device_name,
-            dvrName: dvr_name
-
+    return Promise.all(clientTokensWithoutNotification.map(
+        async (e) => {
+            try {
+                await admin.messaging().send({
+                    token: e,
+                    data: {
+                        serverId: server_uuid,
+                        eventType: 'motion_event',
+                        eventDateTime: String(event_datetime),
+                        deviceId: String(device_id),
+                        deviceName: device_name,
+                        dvrName: dvr_name
+                    },
+                    android: {
+                        priority: "high",
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                "content-available": 1,
+                                "mutable-content": 1,
+                            },
+                        },
+                        headers: {
+                            "apns-push-type": "background",
+                            "apns-priority": "5",
+                        },
+                    },
+                });
+            } catch (e) {
+                console.log(e);
+                // Do not prevent other [Promise]s from resolving, even if one [Promise] fails while sending data notification to one of the tokens.
+            }
         }
-    }, {
-        contentAvailable: true,
-        priority: 'high',
-    });
-
+    ));
 }
 
 async function handleDeviceStateWithoutNotification(clientTokensWithoutNotification, {server_uuid, event_datetime, device_id, device_name, state, dvr_name}) {
-
-    return admin.messaging().sendToDevice(clientTokensWithoutNotification, {
-        data: {serverId: server_uuid, state,
-            eventType: 'device_state',
-            eventDateTime: String(event_datetime),
-            deviceId: String(device_id),
-            deviceName: device_name,
-            dvrName: dvr_name
+    return Promise.all(clientTokensWithoutNotification.map(
+        async (e) => {
+            try {
+                await admin.messaging().send({
+                    token: e,
+                    data: {serverId: server_uuid, state,
+                        eventType: 'device_state',
+                        eventDateTime: String(event_datetime),
+                        deviceId: String(device_id),
+                        deviceName: device_name,
+                        dvrName: dvr_name
+                    },
+                    android: {
+                        priority: "high",
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                "content-available": 1,
+                                "mutable-content": 1,
+                            },
+                        },
+                        headers: {
+                            "apns-push-type": "background",
+                            "apns-priority": "5",
+                        },
+                    },
+                });
+            } catch (e) {
+                console.log(e);
+                // Do not prevent other [Promise]s from resolving, even if one [Promise] fails while sending data notification to one of the tokens.
+            }
         }
-    }, {
-        contentAvailable: true,
-        priority: 'high',
-    });
-
+    ));
 }
 
 async function handleSoloWithoutNotification(clientTokensWithoutNotification, {server_uuid, event_datetime, state, dvr_name}) {
-
-    return admin.messaging().sendToDevice(clientTokensWithoutNotification, {
-        data: {serverId: server_uuid, state,
-            eventType: 'solo',
-            eventDateTime: String(event_datetime),
-            dvrName: dvr_name
+    return Promise.all(clientTokensWithoutNotification.map(
+        async (e) => {
+            try {
+                await admin.messaging().send({
+                    token: e,
+                    data: {serverId: server_uuid, state,
+                        eventType: 'solo',
+                        eventDateTime: String(event_datetime),
+                        dvrName: dvr_name
+                    },
+                    android: {
+                        priority: "high",
+                    },
+                    apns: {
+                        payload: {
+                            aps: {
+                                "content-available": 1,
+                                "mutable-content": 1,
+                            },
+                        },
+                        headers: {
+                            "apns-push-type": "background",
+                            "apns-priority": "5",
+                        },
+                    },
+                });
+            } catch (e) {
+                console.log(e);
+                // Do not prevent other [Promise]s from resolving, even if one [Promise] fails while sending data notification to one of the tokens.
+            }
         }
-    }, {
-        contentAvailable: true,
-        priority: 'high',
-    });
-
+    ));
 }
 
 app.use(express.json());
