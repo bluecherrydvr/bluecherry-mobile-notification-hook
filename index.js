@@ -273,10 +273,16 @@ router.post('/hook', wrap(async (req, res) => {
     // Split `clientTokensAll` into:
     // 1. `clientTokens`
     // 2. `clientTokensWithoutNotification`
-    for (const [key, value] of Object.entries(clientTokensAll)) {
-        if (typeof clientDisablePayloadNotifications === 'object' && clientDisablePayloadNotifications[key] == true) {
-            clientTokensWithoutNotification.push(value);
-        } else {
+    if (clientDisablePayloadNotifications != null && clientDisablePayloadNotifications != undefined) {
+        for (const [key, value] of Object.entries(clientTokensAll)) {
+            if (clientDisablePayloadNotifications[key] == true) {
+                clientTokensWithoutNotification.push(value);
+            } else {
+                clientTokens.push(value);
+            }
+        }
+    } else {
+        for (const [key, value] of Object.entries(clientTokensAll)) {
             clientTokens.push(value);
         }
     }
