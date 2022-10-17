@@ -275,7 +275,9 @@ router.post('/hook', wrap(async (req, res) => {
     // 2. `clientTokensWithoutNotification`
     if (clientDisablePayloadNotifications != null && clientDisablePayloadNotifications != undefined) {
         for (const [key, value] of Object.entries(clientTokensAll)) {
-            if (clientDisablePayloadNotifications[key] == true) {
+            // Redis seems to convert boolean values into string.
+            // Causing notification segregation process to fail.
+            if ([true, "true"].includes(clientDisablePayloadNotifications[key])) {
                 clientTokensWithoutNotification.push(value);
             } else {
                 clientTokens.push(value);
